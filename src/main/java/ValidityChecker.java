@@ -14,10 +14,11 @@ public class ValidityChecker {
     public boolean validate(String number) {
         // Immediately return false if any requirement is not met by throwing an exception
         try {
+            ascertain(number != null, "Null input");
             // Check if number matches any valid pattern (disregarding digit validity)
             Pattern p_personal = Pattern.compile("^(\\d{6}|\\d{8})[-+]?\\d{4}$");
             Matcher personal = p_personal.matcher(number);
-            ascertain(personal.matches());
+            ascertain(personal.matches(), "Incorrect syntax");
 
             boolean organisation = false;
             // A full YYYY means 12 or 13 characters
@@ -46,7 +47,7 @@ public class ValidityChecker {
             boolean coordination = ((day_1 >= 6) && (day_1 <=9));
 
             // A number can't be BOTH an organisation and a coordination number
-            ascertain(!(organisation && coordination));
+            ascertain(!(organisation && coordination), "Both organisation and coordination");
 
             // An organisation number does not need to adhere date rules
             if (!organisation) {
@@ -56,7 +57,8 @@ public class ValidityChecker {
                     // offset 61-91 to regular date 01-31
                     date = date.substring(0, 4) + (day_1 - 6) + date.substring(5);
                 }
-                ascertain(valid_date(date));
+                // Throws exception if false
+                valid_date(date);
             }
 
             // Validate control digit (last digit of the number)
@@ -68,7 +70,7 @@ public class ValidityChecker {
             String control_digit = luhns_algorithm(clean_number);
             String last_digit = number.substring(number.length() - 1);
 
-            ascertain(control_digit.equals(last_digit));
+            ascertain(control_digit.equals(last_digit), "Control digit does not match");
 
             return true;
         } catch (AssertionError e) {
@@ -81,8 +83,7 @@ public class ValidityChecker {
      * Checks if a date is valid by trying to parse it as one.
      * @param date to validate, no poor rhyme intended.
      */
-    private boolean valid_date(String date) {
-        boolean valid = false;
+    private void valid_date(String date) {
         DateTimeFormatter format;
         if (date.length() == 8) {
             //YYYYMMDD
@@ -93,20 +94,20 @@ public class ValidityChecker {
         }
         try {
             // Strict ResolverStyle invalidates any incorrect date, e.g. non-leap year 02/29
-            LocalDate local_date = LocalDate.parse(date, format.withResolverStyle(ResolverStyle.STRICT));
-            valid = true;
+            LocalDate.parse(date, format.withResolverStyle(ResolverStyle.STRICT));
         } catch (DateTimeParseException e) {
+            throw new AssertionError(e);
 //            e.printStackTrace();
         }
-        return valid;
     }
 
     /**
      * Throws exception if the input is false.
      * @param bool statement to evaluate.
      */
-    private void ascertain(boolean bool) {
+    private void ascertain(boolean bool, String error_message) {
         if (!bool) {
+//            System.out.println(error_message);
             throw new AssertionError();
         }
     }
@@ -143,7 +144,7 @@ public class ValidityChecker {
             if ((i % 2) == 0) {
                 addition += digit * 2;
             } else {
-                addition += digit * 1;
+                addition += digit; // * 1
             }
             control_digit += digit_sum(addition);
         }

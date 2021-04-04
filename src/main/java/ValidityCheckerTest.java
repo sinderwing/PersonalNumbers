@@ -28,6 +28,7 @@ class ValidityCheckerTest {
         // Invalid personal numbers
         assertFalse(vl.validate("201701272394"));
         assertFalse(vl.validate("190302299813"));
+        assertFalse(vl.validate(null));
 
         // Valid coordination number
         assertTrue(vl.validate("190910799824"));
